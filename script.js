@@ -26,10 +26,10 @@ function log(msg = "") {
 function updateStatus() {
   const goalText = goalCleared
     ? "목표 완료"
-    : `목표 음식 ${goalFood}개 (${food}/${goalFood})`;
+    : `목표 FOOD ${goalFood} (${food}/${goalFood})`;
 
   statusEl.textContent =
-    `day ${day} | hp ${hp}/150 | sp ${sp}/150 | sta ${sta}/300 | food ${food} | skill ${skill[0]} | ${goalText}`;
+    `Day ${day} | HP ${hp}/150 | SP ${sp}/150 | STA ${sta}/300 | FOOD ${food} | SKILL ${skill[0]} | ${goalText}`;
 }
 
 // ===== 스토리 =====
@@ -58,14 +58,12 @@ function playStory() {
     startGame();
   }
 }
-
 playStory();
 
 // ===== 게임 시작 =====
 function startGame() {
   gameStarted = true;
 
-  // 시작 스킬
   skill = ["연속찌르기"];
   log("당신은 연속찌르기를 얻었다");
 
@@ -90,10 +88,10 @@ function startGame() {
     updateStatus();
   }, 1000);
 
-  // 하루 경과 (밤 시스템)
+  // 밤 시스템
   setInterval(() => {
     day++;
-    log(`🌙 밤이 되었다 (day ${day})`);
+    log(`🌙 밤이 되었다 (Day ${day})`);
 
     if (food < 20) {
       alert("밤을 넘길 음식이 부족해 굶어 죽었다");
@@ -102,7 +100,6 @@ function startGame() {
       food -= 20;
       log("밤을 넘기며 음식 20개를 소비했다");
     }
-
     updateStatus();
   }, 60000);
 }
@@ -110,11 +107,11 @@ function startGame() {
 // ===== 사망 =====
 function checkDeath() {
   if (hp <= 0) {
-    alert("당신은 체력이 없어 죽었다");
+    alert("체력이 없어 사망했다");
     location.reload();
   }
   if (sp <= 0) {
-    alert("당신은 허기를 이기지 못해 죽었다");
+    alert("허기를 이기지 못해 사망했다");
     location.reload();
   }
 }
@@ -123,7 +120,7 @@ function checkDeath() {
 function checkGoal() {
   if (!goalCleared && food >= goalFood) {
     goalCleared = true;
-    log(`🎯 목표 달성! 음식 ${goalFood}개를 모았다`);
+    log(`🎯 목표 달성! 음식 ${goalFood}개 확보`);
   }
 }
 
@@ -147,12 +144,19 @@ function updateSkill() {
 function getFood() {
   if (!gameStarted) return;
 
+  if (sta < 8) {
+    log("스태미나가 부족하다");
+    return;
+  }
+
+  sta -= 8;
+
   if (Math.random() < 0.5) {
     const b = Math.floor(Math.random() * 3) + 1;
     food += b;
-    log(`음식 ${b}개를 구했다`);
+    log(`스태미나 8을 소모하고 음식 ${b}개를 구했다`);
   } else {
-    log("음식을 구하지 못했다");
+    log("스태미나 8을 소모했지만 음식을 구하지 못했다");
   }
 
   log("");
@@ -209,7 +213,6 @@ function fishing() {
   }, 1500);
 }
 
-// ===== 음식 먹기 =====
 function eatFood() {
   if (!gameStarted) return;
 
