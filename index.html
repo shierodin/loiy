@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>섬 생존</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>무인도 생존</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
 </head>
 <body>
+  <h1>🏝 무인도 생존</h1>
 
-<h2 id="status"></h2>
+  <div id="status"></div>
 
-<pre id="log"></pre>
+  <pre id="log"></pre>
 
-<div class="buttons">
-  <button onclick="getFood()">음</button>
-  <button onclick="useSkill()">스</button>
-  <button onclick="fishing()">낚</button>
-</div>
-
-<script src="script.js"></script>
+  <div id="buttons">
+    <button onclick="getFood()">음식 구하기</button>
+    <button onclick="useSkill()">스킬 사용</button>
+    <button onclick="fishing()">낚시</button>
+  </div>
 </body>
 </html>
