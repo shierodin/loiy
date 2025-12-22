@@ -134,7 +134,7 @@ function ending() {
 
 // ===== 목표 =====
 function setDailyGoal() {
-  goalFood = 20 + (day - 1) * 10;
+  goalFood = 20 + (day - 1) * 2;
 }
 
 function checkGoal() {
