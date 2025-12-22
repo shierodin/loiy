@@ -25,8 +25,8 @@ function log(msg = "") {
 
 function updateStatus() {
   const goalText = goalCleared
-    ? "목표 완료"
-    : `목표 FOOD ${goalFood} (${food}/${goalFood})`;
+    ? `Day ${day} 목표 완료`
+    : `Day ${day} 목표: FOOD ${goalFood} (${food}/${goalFood})`;
 
   statusEl.textContent =
     `Day ${day} | HP ${hp}/150 | SP ${sp}/150 | STA ${sta}/300 | FOOD ${food} | SKILL ${skill[0]} | ${goalText}`;
@@ -67,6 +67,7 @@ function startGame() {
   skill = ["연속찌르기"];
   log("당신은 연속찌르기를 얻었다");
 
+  setDailyGoal();
   updateStatus();
 
   // 허기 감소
@@ -89,38 +90,41 @@ function startGame() {
   }, 1000);
 
   // 밤 시스템
-  setInterval(() => {
-    day++;
-    log(`🌙 밤이 되었다 (Day ${day})`);
-
-    if (food < 20) {
-      alert("밤을 넘길 음식이 부족해 굶어 죽었다");
-      location.reload();
-    } else {
-      food -= 20;
-      log("밤을 넘기며 음식 20개를 소비했다");
-    }
-    updateStatus();
-  }, 60000);
+  setInterval(nextDay, 60000);
 }
 
-// ===== 사망 =====
-function checkDeath() {
-  if (hp <= 0) {
-    alert("체력이 없어 사망했다");
+// ===== 하루 변경 =====
+function nextDay() {
+  log(`🌙 밤이 되었다 (Day ${day})`);
+
+  if (food < 20) {
+    alert("밤을 넘길 음식이 부족해 굶어 죽었다");
     location.reload();
+    return;
   }
-  if (sp <= 0) {
-    alert("허기를 이기지 못해 사망했다");
-    location.reload();
-  }
+
+  food -= 20;
+  log("밤을 넘기며 음식 20개를 소비했다");
+
+  day++;
+  goalCleared = false;
+  setDailyGoal();
+
+  log(`☀️ Day ${day} 시작`);
+  log(`🎯 새로운 목표: 음식 ${goalFood}개 확보`);
+
+  updateStatus();
 }
 
 // ===== 목표 =====
+function setDailyGoal() {
+  goalFood = 20 + (day - 1) * 10;
+}
+
 function checkGoal() {
   if (!goalCleared && food >= goalFood) {
     goalCleared = true;
-    log(`🎯 목표 달성! 음식 ${goalFood}개 확보`);
+    log(`🎯 Day ${day} 목표 달성!`);
   }
 }
 
@@ -137,6 +141,18 @@ function updateSkill() {
   if (y === 240) {
     skill[0] = "일전팔기";
     log("낙화참이 각성해, 일전팔기로 바뀌었다");
+  }
+}
+
+// ===== 사망 =====
+function checkDeath() {
+  if (hp <= 0) {
+    alert("체력이 없어 사망했다");
+    location.reload();
+  }
+  if (sp <= 0) {
+    alert("허기를 이기지 못해 사망했다");
+    location.reload();
   }
 }
 
@@ -221,9 +237,9 @@ function eatFood() {
     return;
   }
 
-  food -= 1;
+  food--;
   sp = Math.min(150, sp + 15);
-
   log("음식을 먹어 허기가 회복되었다");
+
   updateStatus();
 }
