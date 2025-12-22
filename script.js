@@ -65,7 +65,7 @@ playStory();
 function startGame() {
   gameStarted = true;
 
-  // ✅ 시작 스킬 지급
+  // 시작 스킬
   skill = ["연속찌르기"];
   log("당신은 연속찌르기를 얻었다");
 
@@ -90,10 +90,20 @@ function startGame() {
     updateStatus();
   }, 1000);
 
-  // 날짜 증가
+  // 하루 경과 (밤 시스템)
   setInterval(() => {
     day++;
-    log(`day ${day}`);
+    log(`🌙 밤이 되었다 (day ${day})`);
+
+    if (food < 20) {
+      alert("밤을 넘길 음식이 부족해 굶어 죽었다");
+      location.reload();
+    } else {
+      food -= 20;
+      log("밤을 넘기며 음식 20개를 소비했다");
+    }
+
+    updateStatus();
   }, 60000);
 }
 
@@ -197,4 +207,20 @@ function fishing() {
     checkGoal();
     updateStatus();
   }, 1500);
+}
+
+// ===== 음식 먹기 =====
+function eatFood() {
+  if (!gameStarted) return;
+
+  if (food <= 0) {
+    log("먹을 음식이 없다");
+    return;
+  }
+
+  food -= 1;
+  sp = Math.min(150, sp + 15);
+
+  log("음식을 먹어 허기가 회복되었다");
+  updateStatus();
 }
