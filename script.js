@@ -6,9 +6,14 @@ let hp = 150;
 let skill = [];
 let food = 0;
 let day = 1;
+
+let goalFood = 20;
+let goalCleared = false;
+
 let isFishing = false;
 let gameStarted = false;
 
+// ===== 요소 =====
 const logEl = document.getElementById("log");
 const statusEl = document.getElementById("status");
 
@@ -19,8 +24,12 @@ function log(msg = "") {
 }
 
 function updateStatus() {
+  const goalText = goalCleared
+    ? "목표 완료"
+    : `목표 음식 ${goalFood}개 (${food}/${goalFood})`;
+
   statusEl.textContent =
-    `day ${day} | hp ${hp}/150 | sp ${sp}/150 | sta ${sta}/300 | food ${food} | skill ${skill[0] ?? "스킬 없음"}`;
+    `day ${day} | hp ${hp}/150 | sp ${sp}/150 | sta ${sta}/300 | food ${food} | skill ${skill[0]} | ${goalText}`;
 }
 
 // ===== 스토리 =====
@@ -46,7 +55,7 @@ function playStory() {
     setTimeout(playStory, 2000);
   } else {
     log("");
-    startGame(); // ✅ 스토리 끝 → 게임 시작
+    startGame();
   }
 }
 
@@ -55,26 +64,33 @@ playStory();
 // ===== 게임 시작 =====
 function startGame() {
   gameStarted = true;
-  updateSkill(); // ✅ 스킬 강제 지급
+
+  // ✅ 시작 스킬 지급
+  skill = ["연속찌르기"];
+  log("당신은 연속찌르기를 얻었다");
+
   updateStatus();
 
-  // 멀티태스킹
+  // 허기 감소
   setInterval(() => {
     sp = Math.max(0, sp - 2);
     checkDeath();
     updateStatus();
   }, 5000);
 
+  // 체력 회복
   setInterval(() => {
     hp = Math.min(150, hp + 4);
     updateStatus();
   }, 5000);
 
+  // 스태미나 회복
   setInterval(() => {
     sta = Math.min(300, sta + 3);
     updateStatus();
   }, 1000);
 
+  // 날짜 증가
   setInterval(() => {
     day++;
     log(`day ${day}`);
@@ -93,12 +109,16 @@ function checkDeath() {
   }
 }
 
-// ===== 스킬 =====
-function updateSkill() {
-  if (y === 0 && skill.length === 0) {
-    skill.push("연속찌르기");
-    log("당신은 연속찌르기를 얻었다");
+// ===== 목표 =====
+function checkGoal() {
+  if (!goalCleared && food >= goalFood) {
+    goalCleared = true;
+    log(`🎯 목표 달성! 음식 ${goalFood}개를 모았다`);
   }
+}
+
+// ===== 스킬 각성 =====
+function updateSkill() {
   if (y === 65) {
     skill[0] = "선시 슬래쉬";
     log("연속찌르기가 각성해, 선시 슬래쉬로 바뀌었다");
@@ -124,17 +144,14 @@ function getFood() {
   } else {
     log("음식을 구하지 못했다");
   }
+
   log("");
+  checkGoal();
   updateStatus();
 }
 
 function useSkill() {
   if (!gameStarted) return;
-
-  if (skill.length === 0) {
-    log("보유한 스킬 없음");
-    return;
-  }
 
   let gain = 0, cost = 0;
   const s = skill[0];
@@ -152,8 +169,11 @@ function useSkill() {
   sta -= cost;
   food += gain;
   y++;
+
   log(`스태미나 ${cost}을 소모하고 음식 ${gain}개를 얻었다`);
+
   updateSkill();
+  checkGoal();
   updateStatus();
 }
 
@@ -173,6 +193,8 @@ function fishing() {
     food += g;
     log(`음식 ${g}개를 얻었다`);
     isFishing = false;
+
+    checkGoal();
     updateStatus();
   }, 1500);
 }
