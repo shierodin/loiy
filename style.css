@@ -2,35 +2,63 @@ body {
   background: #111;
   color: #eee;
   font-family: monospace;
-  padding: 20px;
+  padding: 12px;
+  margin: 0;
 }
 
 h1 {
-  font-size: 32px;
+  font-size: 28px;
+  text-align: center;
 }
 
 #log {
   background: #000;
-  border: 1px solid #555;
+  border: 2px solid #555;
   padding: 15px;
-  height: 300px;
+  height: 45vh;
   overflow-y: auto;
   font-size: 18px;
   white-space: pre-wrap;
+  border-radius: 8px;
 }
 
 #status {
   margin-top: 10px;
   font-size: 18px;
+  padding: 10px;
+  background: #1a1a1a;
+  border-radius: 8px;
 }
 
 .buttons {
   margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 button {
-  font-size: 18px;
-  padding: 10px 20px;
-  margin-right: 10px;
-  cursor: pointer;
+  font-size: 22px;
+  padding: 16px;
+  width: 100%;
+  border-radius: 10px;
+  border: none;
+  background: #333;
+  color: #fff;
+}
+
+button:active {
+  background: #555;
+}
+
+@media (min-width: 768px) {
+  .buttons {
+    flex-direction: row;
+  }
+  button {
+    flex: 1;
+  }
+  #log {
+    height: 300px;
+  }
 }
