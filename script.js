@@ -1,101 +1,80 @@
-// ===== 상태 =====
-let y = 0;
-let sta = 100;
-let sp = 150;
-let hp = 150;
-let skill = [];
-let food = 0;
+/* ===== 기본 상태 ===== */
 let day = 1;
+let hp = 150;
+let sp = 150;
+let sta = 100;
+let food = 30;
 
+let skill = ["연속찌르기"];
 let goalFood = 20;
-let goalCleared = false;
-
-let isFishing = false;
 let gameStarted = false;
 
-// ===== 요소 =====
+/* ===== 무기 ===== */
+let weapon = "없음";
+let weaponBonus = 0;
+let weaponLevel = 0;
+
+/* ===== 전투 ===== */
+let inBattle = false;
+let enemies = [];
+let enemyTimer = null;
+let attackCooldown = false;
+
+/* ===== 보스 ===== */
+let isBossBattle = false;
+let bossHp = 1000;
+
+/* ===== DOM ===== */
 const logEl = document.getElementById("log");
 const statusEl = document.getElementById("status");
+const buttonsEl = document.querySelector(".buttons");
 
-// ===== 출력 =====
-function log(msg = "") {
+/* ===== 로그 ===== */
+function log(msg) {
   logEl.textContent += msg + "\n";
   logEl.scrollTop = logEl.scrollHeight;
 }
 
+/* ===== 상태 ===== */
 function updateStatus() {
-  const goalText = goalCleared
-    ? `Day ${day} 목표 완료`
-    : `Day ${day} 목표: FOOD ${goalFood} (${food}/${goalFood})`;
-
   statusEl.textContent =
-    `Day ${day} | HP ${hp}/150 | SP ${sp}/150 | STA ${sta}/300 | FOOD ${food} | SKILL ${skill[0]} | ${goalText}`;
+    `Day ${day} | HP ${hp}/150 | SP ${sp}/150 | STA ${sta}/300 | FOOD ${food} | SKILL ${skill[0]} | WEAPON ${weapon} +${weaponLevel} | 목표 ${goalFood}`;
 }
 
-// ===== 스토리 =====
-const story = [
-  "비행기를 탔다",
-  "비행기는 언제 타도 설렌다",
-  '"오랜만에 여행이라니"',
-  '"아 좀 오래 걸리네 뭐 그냥 자야겠다"',
-  "그것이 비행기 안에서의 마지막 말이 될 줄은 몰랐다",
-  "무인도에 갇혔다",
-  "하.. 나 말곤 아무것도 할 줄 모른다",
-  "그렇기에 내가 모든걸 책임져야 한다",
-  "90일은 생존해야 구조대가 올 것 같다",
-  "이제 시작이다"
-];
+/* ===== 스토리 ===== */
+function startStory() {
+  const story = [
+    "비행기를 탔다",
+    "비행기는 언제 타도 설렌다",
+    '"오랜만에 여행이라니"',
+    '"아 좀 오래 걸리네 뭐 그냥 자야겠다"',
+    "그것이 비행기 안에서의 마지막 말이 될 줄은 몰랐다",
+    "무인도에 갇혔다",
+    "90일을 버티면 구조대가 온다",
+    "이제 시작이다"
+  ];
 
-let storyIndex = 0;
+  story.forEach((s, i) => {
+    setTimeout(() => log(s), i * 2000);
+  });
 
-function playStory() {
-  if (storyIndex < story.length) {
-    log(story[storyIndex]);
-    storyIndex++;
-    setTimeout(playStory, 2000);
-  } else {
-    log("");
-    startGame();
-  }
+  setTimeout(() => {
+    gameStarted = true;
+    updateStatus();
+    startDayTimer();
+  }, story.length * 2000);
 }
-playStory();
 
-// ===== 게임 시작 =====
-function startGame() {
-  gameStarted = true;
-
-  skill = ["연속찌르기"];
-  log("당신은 연속찌르기를 얻었다");
-
-  setDailyGoal();
-  updateStatus();
-
-  // 허기 감소
-  setInterval(() => {
-    sp = Math.max(0, sp - 2);
-    checkDeath();
-    updateStatus();
-  }, 5000);
-
-  // 체력 회복
-  setInterval(() => {
-    hp = Math.min(150, hp + 4);
-    updateStatus();
-  }, 5000);
-
-  // 스태미나 회복
-  setInterval(() => {
-    sta = Math.min(300, sta + 3);
-    updateStatus();
-  }, 1000);
-
-  // 밤 시스템
+/* ===== 하루 타이머 (1분) ===== */
+function startDayTimer() {
   setInterval(nextDay, 60000);
 }
 
-// ===== 하루 변경 =====
+/* ===== 하루 넘김 ===== */
 function nextDay() {
-  log(`🌙 밤이 되었다 (Day ${day})`);
+  if (!gameStarted || inBattle) return;
+
+  log(`🌙 Day ${day} 종료`);
 
   if (food < 20) {
     alert("밤을 넘길 음식이 부족해 굶어 죽었다");
@@ -104,158 +83,205 @@ function nextDay() {
   }
 
   food -= 20;
-  log("밤을 넘기며 음식 20개를 소비했다");
-
   day++;
-  goalCleared = false;
-  setDailyGoal();
 
+  if (day === 90) {
+    startBossBattle();
+    return;
+  }
+
+  goalFood += 5;
   log(`☀️ Day ${day} 시작`);
-  log(`🎯 새로운 목표: 음식 ${goalFood}개 확보`);
+  log(`🎯 목표: 음식 ${goalFood}개`);
+
+  if (day % 5 === 0 && day <= 85) {
+    startEnemyAttack();
+  }
 
   updateStatus();
 }
 
-function ending() {
-  log("");
-  log("90일째 아침이 밝았다");
-  setTimeout(() => log("멀리서 헬기의 소리가 들린다"), 2000);
-  setTimeout(() => log("처음엔 착각인 줄 알았다"), 4000);
-  setTimeout(() => log("하지만 점점 가까워진다"), 6000);
-  setTimeout(() => log("구조대다"), 8000);
-  setTimeout(() => {
-    log("당신은 살아남았다");
-    alert("🎉 생존 엔딩 달성!");
-  }, 10000);
-
-  gameStarted = false;
-}
-
-
-// ===== 목표 =====
-function setDailyGoal() {
-  goalFood = 20 + (day - 1) * 2;
-}
-
-function checkGoal() {
-  if (!goalCleared && food >= goalFood) {
-    goalCleared = true;
-    log(`🎯 Day ${day} 목표 달성!`);
-  }
-}
-
-// ===== 스킬 각성 =====
-function updateSkill() {
-  if (y === 65) {
-    skill[0] = "선시 슬래쉬";
-    log("연속찌르기가 각성해, 선시 슬래쉬로 바뀌었다");
-  }
-  if (y === 120) {
-    skill[0] = "낙화참";
-    log("선시 슬래쉬가 각성해, 낙화참으로 바뀌었다");
-  }
-  if (y === 240) {
-    skill[0] = "일전팔기";
-    log("낙화참이 각성해, 일전팔기로 바뀌었다");
-  }
-}
-
-// ===== 사망 =====
-function checkDeath() {
-  if (hp <= 0) {
-    alert("체력이 없어 사망했다");
-    location.reload();
-  }
-  if (sp <= 0) {
-    alert("허기를 이기지 못해 사망했다");
-    location.reload();
-  }
-}
-
-// ===== 행동 =====
+/* ===== 음식 구하기 ===== */
 function getFood() {
-  if (!gameStarted) return;
-
+  if (!gameStarted || inBattle) return;
   if (sta < 8) {
-    log("스태미나가 부족하다");
+    log("스태미나 부족");
     return;
   }
-
   sta -= 8;
-
-  if (Math.random() < 0.5) {
-    const b = Math.floor(Math.random() * 3) + 1;
-    food += b;
-    log(`스태미나 8을 소모하고 음식 ${b}개를 구했다`);
-  } else {
-    log("스태미나 8을 소모했지만 음식을 구하지 못했다");
-  }
-
-  log("");
-  checkGoal();
-  updateStatus();
-}
-
-function useSkill() {
-  if (!gameStarted) return;
-
-  let gain = 0, cost = 0;
-  const s = skill[0];
-
-  if (s === "연속찌르기") { gain = 7; cost = 30; }
-  if (s === "선시 슬래쉬") { gain = 16; cost = 40; }
-  if (s === "낙화참") { gain = 38; cost = 50; }
-  if (s === "일전팔기") { gain = 80; cost = 65; }
-
-  if (sta < cost) {
-    log("스태미나가 부족하다");
-    return;
-  }
-
-  sta -= cost;
+  const gain = Math.floor(Math.random() * 3) + 1;
   food += gain;
-  y++;
-
-  log(`스태미나 ${cost}을 소모하고 음식 ${gain}개를 얻었다`);
-
-  updateSkill();
-  checkGoal();
+  log(`스태미나 8 소모, 음식 ${gain}개 획득`);
   updateStatus();
 }
 
+/* ===== 낚시 ===== */
 function fishing() {
-  if (!gameStarted) return;
-
-  if (isFishing) {
-    log("이미 낚시를 하고 있다");
-    return;
-  }
-
-  isFishing = true;
-  log("낚시 하는중...");
-
-  setTimeout(() => {
-    const g = Math.floor(Math.random() * 3) + 3;
-    food += g;
-    log(`음식 ${g}개를 얻었다`);
-    isFishing = false;
-
-    checkGoal();
-    updateStatus();
-  }, 1500);
+  if (!gameStarted || inBattle) return;
+  food += 3;
+  log("낚시로 음식 3개 획득");
+  updateStatus();
 }
 
+/* ===== 음식 먹기 / 강화 ===== */
 function eatFood() {
-  if (!gameStarted) return;
+  const choice = confirm(
+    "확인: 음식 먹기 (허기 회복)\n취소: 무기 강화"
+  );
 
-  if (food <= 0) {
-    log("먹을 음식이 없다");
-    return;
+  if (choice) {
+    if (food < 5) {
+      log("음식이 부족하다");
+      return;
+    }
+    food -= 5;
+    sp = Math.min(sp + 20, 150);
+    log("음식 5개를 먹고 허기를 회복했다");
+  } else {
+    enhanceWeapon();
   }
-
-  food--;
-  sp = Math.min(150, sp + 15);
-  log("음식을 먹어 허기가 회복되었다");
 
   updateStatus();
 }
+
+/* ===== 무기 제작 ===== */
+function craftWeapon(type) {
+  const data = {
+    "나무검": { cost: 10, bonus: 0.1 },
+    "돌검": { cost: 20, bonus: 0.2 },
+    "철검": { cost: 30, bonus: 0.3 },
+    "선혈 검": { cost: 50, bonus: 0.5 }
+  };
+
+  if (food < data[type].cost) {
+    log("음식이 부족하다");
+    return;
+  }
+
+  food -= data[type].cost;
+  weapon = type;
+  weaponBonus = data[type].bonus;
+  weaponLevel = 0;
+
+  log(`${type} 제작 완료`);
+  updateStatus();
+}
+
+/* ===== 무기 강화 ===== */
+function enhanceWeapon() {
+  if (weapon === "없음") {
+    log("강화할 무기가 없다");
+    return;
+  }
+
+  if (weaponLevel >= 100) {
+    log("이미 최대 강화다");
+    return;
+  }
+
+  const next = weaponLevel + 1;
+  if (food < next) {
+    log(`강화 실패: 음식 ${next}개 필요`);
+    return;
+  }
+
+  food -= next;
+
+  let rate = next === 100 ? 0.001 : (101 - next) / 100;
+
+  if (Math.random() < rate) {
+    weaponLevel++;
+    log(`✨ 강화 성공! +${weaponLevel}`);
+  } else {
+    log(`💥 강화 실패 (${next}강)`);
+  }
+}
+
+/* ===== 스킬 ===== */
+function useSkill() {
+  if (!inBattle) return;
+
+  let base = { "연속찌르기":10, "선시 슬래쉬":20, "낙화참":35, "일전팔기":60 }[skill[0]];
+  let dmg = Math.floor(base * (1 + weaponBonus + weaponLevel * 0.01));
+
+  enemies.forEach(e => e.hp -= dmg);
+  log(`${skill[0]} 사용! 전체 ${dmg} 데미지`);
+
+  enemies = enemies.filter(e => e.hp > 0);
+  if (enemies.length === 0) endBattle();
+}
+
+/* ===== 일반 공격 ===== */
+function attackEnemy() {
+  if (attackCooldown || !inBattle) return;
+
+  attackCooldown = true;
+  setTimeout(() => attackCooldown = false, 500);
+
+  let dmg = Math.floor(food * (1 + weaponBonus + weaponLevel * 0.01));
+  enemies[0].hp -= dmg;
+  log(`공격! ${dmg} 데미지`);
+
+  if (enemies[0].hp <= 0) {
+    enemies.shift();
+    log("적 1명 처치");
+  }
+
+  if (enemies.length === 0) endBattle();
+}
+
+/* ===== 적 습격 ===== */
+function startEnemyAttack() {
+  inBattle = true;
+  enemies = [];
+
+  let count = day === 5 ? 3 : day === 10 ? 9 : 12;
+  for (let i = 0; i < count; i++) enemies.push({ hp: 50 });
+
+  log(`⚠️ 적 ${enemies.length}명 습격!`);
+  switchToBattleUI();
+
+  enemyTimer = setTimeout(() => {
+    alert("시간 초과! 게임 오버");
+    location.reload();
+  }, 60000);
+}
+
+/* ===== 보스 ===== */
+function startBossBattle() {
+  inBattle = true;
+  log("보스가 공격을 시작합니다");
+  ["3","2","1"].forEach((n,i)=>setTimeout(()=>log(n),i*1000));
+  switchToBattleUI();
+}
+
+/* ===== 전투 종료 ===== */
+function endBattle() {
+  clearTimeout(enemyTimer);
+  inBattle = false;
+  switchToNormalUI();
+  log("전투 종료");
+}
+
+/* ===== UI ===== */
+function switchToBattleUI() {
+  buttonsEl.innerHTML = `
+    <button onclick="attackEnemy()">⚔️ 공격</button>
+    <button onclick="useSkill()">🔥 스킬</button>
+  `;
+}
+
+function switchToNormalUI() {
+  buttonsEl.innerHTML = `
+    <button onclick="getFood()">🍖 음식 구하기</button>
+    <button onclick="fishing()">🎣 낚시</button>
+    <button onclick="eatFood()">🍴 음식 먹기 / 강화</button>
+    <button onclick="craftWeapon('나무검')">🪵 나무검</button>
+    <button onclick="craftWeapon('돌검')">🪨 돌검</button>
+    <button onclick="craftWeapon('철검')">⚙️ 철검</button>
+    <button onclick="craftWeapon('선혈 검')">🩸 선혈 검</button>
+  `;
+}
+
+/* ===== 시작 ===== */
+startStory();
