@@ -31,12 +31,19 @@ button{font-size:15px;padding:12px 16px;border-radius:12px;border:none;backgroun
 <div class="buttons" id="normalButtons">
   <button onclick="gatherFood()">🌿 채집</button>
   <button onclick="fish()">🎣 낚시</button>
+  <button onclick="toggleEat()">🍖 사용</button>
+</div>
+
+<div class="buttons" id="eatButtons" style="display:none">
+  <button onclick="eatFood()">🍽 먹기</button>
 </div>
 
 <div class="buttons" id="combatButtons" style="display:none">
   <button onclick="attack()">⚔️ 공격</button>
   <button onclick="toggleSkills()">✨ 스킬</button>
-  <button id="dodgeBtn" onclick="dodgePattern()" style="display:none">🌀 패턴 피하기</button>
+  <button id="dodgeBtn" onclick="dodgePattern()" style="display:none">
+    🌀 패턴 피하기
+  </button>
 </div>
 
 <div class="buttons" id="skillButtons" style="display:none">
@@ -48,6 +55,6 @@ button{font-size:15px;padding:12px 16px;border-radius:12px;border:none;backgroun
 
 <div id="log"></div>
 
-<script src="game.js"></script>
+<script defer src="./game.js"></script>
 </body>
 </html>
